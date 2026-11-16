@@ -7,210 +7,315 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-        body { font-family: 'Inter', sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #030712;
+            overflow-x: hidden;
+        }
         .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* Curseur clignotant */
+        .cursor-blink {
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Cartes avec effet Spotlight et lueur */
+        .glow-card {
+            position: relative;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(51, 65, 85, 0.6);
+            transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .glow-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(34, 211, 238, 0.5);
+            box-shadow: 0 10px 30px -10px rgba(6, 182, 212, 0.25);
+        }
+
+        /* Animation d'apparition au scroll */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Barre de défilement personnalisée */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #030712; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #06b6d4; }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-200 antialiased selection:bg-cyan-500/30 selection:text-cyan-200">
+<body class="text-slate-200 antialiased selection:bg-cyan-500/30 selection:text-cyan-200">
+
+    <!-- Fond animé topologie réseau -->
+    <canvas id="network-canvas" class="fixed inset-0 -z-10 pointer-events-none opacity-60"></canvas>
+
+    <!-- Halo lumineux d'ambiance -->
+    <div class="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-cyan-500/10 blur-[120px] rounded-full -z-10 pointer-events-none"></div>
 
     <!-- Navigation -->
-    <nav class="sticky top-0 z-50 backdrop-blur-md bg-slate-950/80 border-b border-slate-800/80">
+    <nav class="sticky top-0 z-50 backdrop-blur-xl bg-slate-950/75 border-b border-slate-800/80">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-            <a href="#" class="font-mono text-cyan-400 font-medium tracking-tight flex items-center gap-2">
-                <span class="text-slate-500">~/</span>florent-spring
+            <a href="#" class="font-mono text-cyan-400 font-bold tracking-tight flex items-center gap-2 group">
+                <span class="px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/30 text-xs group-hover:bg-cyan-500 group-hover:text-slate-950 transition">root@florent</span>
+                <span class="text-slate-400 hidden sm:inline">:~$</span>
             </a>
-            <div class="flex items-center gap-4 sm:gap-6 text-sm">
+            <div class="flex items-center gap-4 sm:gap-6 text-sm font-medium">
+                <a href="#terminal" class="text-slate-400 hover:text-cyan-400 transition hidden sm:inline">Terminal</a>
                 <a href="#experience" class="text-slate-400 hover:text-cyan-400 transition" data-fr="Expérience" data-en="Experience">Expérience</a>
                 <a href="#skills" class="text-slate-400 hover:text-cyan-400 transition" data-fr="Compétences" data-en="Skills">Compétences</a>
                 <a href="#education" class="text-slate-400 hover:text-cyan-400 transition" data-fr="Formation" data-en="Education">Formation</a>
-                <button id="lang-toggle" class="px-2.5 py-1 rounded border border-slate-700 hover:border-cyan-500/50 bg-slate-900 text-xs font-mono text-cyan-400 transition cursor-pointer">
+                <button id="lang-toggle" class="px-2.5 py-1 rounded-md border border-slate-700 hover:border-cyan-400 bg-slate-900/90 text-xs font-mono text-cyan-400 transition cursor-pointer shadow-sm">
                     EN
                 </button>
             </div>
         </div>
     </nav>
 
-    <main class="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-20 space-y-24">
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-20 space-y-28">
 
         <!-- Hero Section -->
-        <header class="space-y-6">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-mono">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span data-fr="Disponible • Montluçon, France" data-en="Available • Montluçon, France">Disponible • Montluçon, France</span>
+        <header class="space-y-8 pt-4">
+            <div class="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-slate-900/90 border border-cyan-500/30 text-cyan-300 text-xs font-mono shadow-lg shadow-cyan-500/5">
+                <span class="relative flex h-2.5 w-2.5">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400"></span>
+                </span>
+                <span data-fr="Système opérationnel • Montluçon, France" data-en="System Online • Montluçon, France">Système opérationnel • Montluçon, France</span>
             </div>
 
-            <div class="space-y-3">
-                <h1 class="text-4xl sm:text-5xl font-bold tracking-tight text-white">
+            <div class="space-y-4">
+                <h1 class="text-5xl sm:text-7xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-cyan-400">
                     Florent SPRING
                 </h1>
-                <p class="text-xl sm:text-2xl text-cyan-400 font-medium" data-fr="Technicien Support IT & Administrateur Systèmes" data-en="IT Support Technician & Systems Administrator">
-                    Technicien Support IT & Administrateur Systèmes
-                </p>
+                <div class="h-9 sm:h-10 flex items-center text-xl sm:text-2xl font-mono text-cyan-400">
+                    <span class="text-slate-500 mr-2">&gt;</span>
+                    <span id="typewriter"></span><span class="cursor-blink text-cyan-400 ml-0.5">_</span>
+                </div>
             </div>
 
-            <p class="text-slate-400 max-w-2xl leading-relaxed text-base sm:text-lg"
+            <p class="text-slate-300/90 max-w-2xl leading-relaxed text-base sm:text-lg"
                data-fr="Passionné par le support informatique et l'administration systèmes avec une solide expérience en assistance utilisateur, diagnostic matériel/logiciel, infrastructure et déploiements techniques. Habitué à allier résolution de problèmes techniques, rigueur d'organisation et automatisation."
                data-en="Passionate IT Support Technician and Systems Administrator with solid experience in user assistance, hardware/software troubleshooting, infrastructure, and technical deployments. Adept at bridging technical problem-solving with rigorous system organization and automation.">
                 Passionné par le support informatique et l'administration systèmes avec une solide expérience en assistance utilisateur, diagnostic matériel/logiciel, infrastructure et déploiements techniques. Habitué à allier résolution de problèmes techniques, rigueur d'organisation et automatisation.
             </p>
 
             <!-- Action Buttons -->
-            <div class="flex flex-wrap items-center gap-3 pt-2">
-                <a href="mailto:florent.spring@ik.me" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold text-sm transition">
-                    <i class="fa-solid fa-envelope"></i>
+            <div class="flex flex-wrap items-center gap-3.5 pt-2">
+                <a href="mailto:florent.spring@ik.me" class="group relative inline-flex items-center gap-2.5 px-5 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-950 font-bold text-sm transition shadow-lg shadow-cyan-500/25">
+                    <i class="fa-solid fa-paper-plane group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"></i>
                     <span>florent.spring@ik.me</span>
                 </a>
 
-                <button onclick="copyEmail()" id="copy-btn" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-sm transition cursor-pointer">
-                    <i class="fa-regular fa-copy"></i>
+                <button onclick="copyEmail()" class="inline-flex items-center gap-2 px-4 py-3 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700 hover:border-cyan-500/50 text-slate-200 text-sm font-medium transition cursor-pointer">
+                    <i class="fa-regular fa-copy text-cyan-400"></i>
                     <span id="copy-text" data-fr="Copier l'e-mail" data-en="Copy email">Copier l'e-mail</span>
                 </button>
 
-                <button onclick="revealPhone()" id="phone-btn" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-sm transition cursor-pointer">
-                    <i class="fa-solid fa-phone"></i>
-                    <span id="phone-text" data-fr="Afficher le téléphone" data-en="Show phone">Afficher le téléphone</span>
+                <button onclick="revealPhone()" id="phone-btn" class="inline-flex items-center gap-2 px-4 py-3 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700 hover:border-cyan-500/50 text-slate-200 text-sm font-medium transition cursor-pointer">
+                    <i class="fa-solid fa-phone text-cyan-400"></i>
+                    <span data-fr="Afficher le téléphone" data-en="Show phone">Afficher le téléphone</span>
                 </button>
 
-                <a href="https://www.linkedin.com" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-sm transition">
-                    <i class="fa-brands fa-linkedin text-cyan-400"></i>
+                <a href="https://www.linkedin.com/in/florent-spring/" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-4 py-3 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700 hover:border-cyan-500/50 text-slate-200 text-sm font-medium transition">
+                    <i class="fa-brands fa-linkedin text-cyan-400 text-base"></i>
                     <span>LinkedIn</span>
                 </a>
             </div>
         </header>
 
+        <!-- Interactive Terminal Section -->
+        <section id="terminal" class="reveal">
+            <div class="rounded-2xl overflow-hidden border border-slate-800 bg-slate-950/90 shadow-2xl shadow-cyan-950/20 backdrop-blur-xl">
+                <!-- Window Top Bar -->
+                <div class="px-4 py-3 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-rose-500/80"></span>
+                        <span class="w-3 h-3 rounded-full bg-amber-500/80"></span>
+                        <span class="w-3 h-3 rounded-full bg-emerald-500/80"></span>
+                        <span class="ml-2 text-xs font-mono text-slate-400">florent@sysadmin-workstation: ~ (bash)</span>
+                    </div>
+                    <div class="flex gap-1.5">
+                        <button onclick="runCmd('neofetch')" class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800 hover:bg-cyan-500/20 text-cyan-400 border border-slate-700 transition cursor-pointer">neofetch</button>
+                        <button onclick="runCmd('skills')" class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800 hover:bg-cyan-500/20 text-cyan-400 border border-slate-700 transition cursor-pointer">skills</button>
+                        <button onclick="runCmd('contact')" class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800 hover:bg-cyan-500/20 text-cyan-400 border border-slate-700 transition cursor-pointer">contact</button>
+                        <button onclick="runCmd('clear')" class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 border border-slate-700 transition cursor-pointer">clear</button>
+                    </div>
+                </div>
+                <!-- Terminal Body -->
+                <div id="terminal-output" class="p-5 font-mono text-xs sm:text-sm space-y-2 max-h-72 overflow-y-auto text-slate-300">
+                    <div class="text-slate-400" data-fr="Bienvenue sur le terminal interactif. Cliquez sur un bouton ci-dessus ou tapez 'help'." data-en="Welcome to the interactive terminal. Click a button above or type 'help'.">Bienvenue sur le terminal interactif. Cliquez sur un bouton ci-dessus ou tapez 'help'.</div>
+                </div>
+                <!-- Terminal Input -->
+                <div class="px-5 py-3 bg-slate-900/50 border-t border-slate-800/80 flex items-center gap-2 font-mono text-xs sm:text-sm">
+                    <span class="text-emerald-400">visitor@portfolio</span><span class="text-slate-500">:~$</span>
+                    <input type="text" id="terminal-input" placeholder="help, neofetch, skills, contact, clear..." class="bg-transparent border-none outline-none text-cyan-300 w-full placeholder:text-slate-600">
+                </div>
+            </div>
+        </section>
+
         <!-- Experience Section -->
-        <section id="experience" class="space-y-8">
+        <section id="experience" class="space-y-10 reveal">
             <div class="flex items-center gap-3">
-                <i class="fa-solid fa-briefcase text-cyan-400"></i>
-                <h2 class="text-2xl font-bold text-white" data-fr="Expérience Professionnelle" data-en="Professional Experience">Expérience Professionnelle</h2>
+                <div class="p-2.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+                    <i class="fa-solid fa-server"></i>
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-bold text-white" data-fr="Parcours Professionnel" data-en="Professional Experience">Parcours Professionnel</h2>
             </div>
 
-            <div class="relative border-l border-slate-800 ml-3 space-y-10">
+            <div class="relative border-l-2 border-slate-800 ml-4 space-y-8">
                 <!-- Job 1 -->
-                <div class="relative pl-8">
-                    <span class="absolute -left-1.5 top-1.5 w-3 h-3 rounded-full bg-cyan-400 ring-4 ring-slate-950"></span>
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                        <h3 class="text-lg font-semibold text-white" data-fr="Éducateur de Vie Scolaire & Agent de Maintenance" data-en="School Life Educator & Maintenance Agent">Éducateur de Vie Scolaire & Agent de Maintenance</h3>
-                        <span class="text-xs font-mono px-2.5 py-1 rounded bg-slate-900 border border-slate-800 text-cyan-400 w-fit">2025 – 2026</span>
+                <div class="relative pl-8 group">
+                    <span class="absolute -left-[9px] top-6 w-4 h-4 rounded-full bg-cyan-400 ring-4 ring-slate-950 group-hover:scale-125 transition-transform"></span>
+                    <div class="glow-card p-6 rounded-2xl">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                            <h3 class="text-lg font-bold text-white group-hover:text-cyan-300 transition" data-fr="Éducateur de Vie Scolaire & Agent de Maintenance" data-en="School Life Educator & Maintenance Agent">Éducateur de Vie Scolaire & Agent de Maintenance</h3>
+                            <span class="text-xs font-mono px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 w-fit">2025 – 2026</span>
+                        </div>
+                        <p class="text-sm text-cyan-400/80 font-medium mt-1">ODEC Saint Dominique Savio • St-Julien-les-Villas (10)</p>
+                        <p class="text-slate-300 text-sm mt-3 leading-relaxed"
+                           data-fr="Encadrement et accompagnement des élèves, maintenance préventive et curative des équipements, coordination des interventions techniques avec les équipes externes et prestataires."
+                           data-en="Student supervision and support, equipment maintenance, coordination of technical interventions with external teams and service providers.">
+                            Encadrement et accompagnement des élèves, maintenance préventive et curative des équipements, coordination des interventions techniques avec les équipes externes et prestataires.
+                        </p>
                     </div>
-                    <p class="text-sm text-slate-400 mt-1">ODEC Saint Dominique Savio • St-Julien-les-Villas (10), France</p>
-                    <p class="text-slate-300 text-sm mt-3 leading-relaxed"
-                       data-fr="Encadrement et accompagnement des élèves, maintenance des équipements, coordination des interventions techniques avec les équipes externes et prestataires."
-                       data-en="Student supervision and support, equipment maintenance, coordination of technical interventions with external teams and service providers.">
-                        Encadrement et accompagnement des élèves, maintenance des équipements, coordination des interventions techniques avec les équipes externes et prestataires.
-                    </p>
                 </div>
 
                 <!-- Job 2 -->
-                <div class="relative pl-8">
-                    <span class="absolute -left-1.5 top-1.5 w-3 h-3 rounded-full bg-slate-700 ring-4 ring-slate-950"></span>
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                        <h3 class="text-lg font-semibold text-white" data-fr="Conseiller Support SI" data-en="IS Support Advisor">Conseiller Support SI</h3>
-                        <span class="text-xs font-mono px-2.5 py-1 rounded bg-slate-900 border border-slate-800 text-slate-400 w-fit">2023 – 2024</span>
+                <div class="relative pl-8 group">
+                    <span class="absolute -left-[9px] top-6 w-4 h-4 rounded-full bg-slate-700 group-hover:bg-cyan-400 ring-4 ring-slate-950 transition-colors"></span>
+                    <div class="glow-card p-6 rounded-2xl">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                            <h3 class="text-lg font-bold text-white group-hover:text-cyan-300 transition" data-fr="Conseiller Support SI" data-en="IS Support Advisor">Conseiller Support SI</h3>
+                            <span class="text-xs font-mono px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300 w-fit">2023 – 2024</span>
+                        </div>
+                        <p class="text-sm text-cyan-400/80 font-medium mt-1">Caisse Nationale d'Assurance Maladie (CNAM) • Pont-Sainte-Marie (10)</p>
+                        <p class="text-slate-300 text-sm mt-3 leading-relaxed"
+                           data-fr="Assistance aux utilisateurs, diagnostic et résolution d'incidents applicatifs, fonctionnels et techniques, suivi et relations avec les éditeurs et fournisseurs."
+                           data-en="User assistance, resolution of application, functional, and technical incidents, vendor and supplier relations.">
+                            Assistance aux utilisateurs, diagnostic et résolution d'incidents applicatifs, fonctionnels et techniques, suivi et relations avec les éditeurs et fournisseurs.
+                        </p>
                     </div>
-                    <p class="text-sm text-slate-400 mt-1">Caisse Nationale d'Assurance Maladie (CNAM) • Pont-Sainte-Marie (10), France</p>
-                    <p class="text-slate-300 text-sm mt-3 leading-relaxed"
-                       data-fr="Assistance aux utilisateurs, résolution d'incidents applicatifs, fonctionnels et techniques, gestion des relations avec les éditeurs et fournisseurs."
-                       data-en="User assistance, resolution of application, functional, and technical incidents, vendor and supplier relations.">
-                        Assistance aux utilisateurs, résolution d'incidents applicatifs, fonctionnels et techniques, gestion des relations avec les éditeurs et fournisseurs.
-                    </p>
                 </div>
 
                 <!-- Job 3 -->
-                <div class="relative pl-8">
-                    <span class="absolute -left-1.5 top-1.5 w-3 h-3 rounded-full bg-slate-700 ring-4 ring-slate-950"></span>
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                        <h3 class="text-lg font-semibold text-white" data-fr="Technicien Support Informatique" data-en="IT Support Technician">Technicien Support Informatique</h3>
-                        <span class="text-xs font-mono px-2.5 py-1 rounded bg-slate-900 border border-slate-800 text-slate-400 w-fit" data-fr="2019 – 2022 (3 ans)" data-en="2019 – 2022 (3 yrs)">2019 – 2022 (3 ans)</span>
+                <div class="relative pl-8 group">
+                    <span class="absolute -left-[9px] top-6 w-4 h-4 rounded-full bg-slate-700 group-hover:bg-cyan-400 ring-4 ring-slate-950 transition-colors"></span>
+                    <div class="glow-card p-6 rounded-2xl">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                            <h3 class="text-lg font-bold text-white group-hover:text-cyan-300 transition" data-fr="Technicien Support Informatique" data-en="IT Support Technician">Technicien Support Informatique</h3>
+                            <span class="text-xs font-mono px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300 w-fit" data-fr="2019 – 2022 (3 ans)" data-en="2019 – 2022 (3 yrs)">2019 – 2022 (3 ans)</span>
+                        </div>
+                        <p class="text-sm text-cyan-400/80 font-medium mt-1">GHT Atlantique 17 / TEDINFO • La Rochelle (17) / Arcis-sur-Aube (10)</p>
+                        <p class="text-slate-300 text-sm mt-3 leading-relaxed"
+                           data-fr="Déploiement de parc informatique, préparation et configuration de postes de travail sur mesure, tests fonctionnels et mise en service (Stage & Alternance)."
+                           data-en="Deployment of IT equipment, workstation configuration tailored to user needs, functional testing (Internship & Apprenticeship).">
+                            Déploiement de parc informatique, préparation et configuration de postes de travail sur mesure, tests fonctionnels et mise en service (Stage & Alternance).
+                        </p>
                     </div>
-                    <p class="text-sm text-slate-400 mt-1">GHT Atlantique 17 / TEDINFO • La Rochelle (17) / Arcis-sur-Aube (10)</p>
-                    <p class="text-slate-300 text-sm mt-3 leading-relaxed"
-                       data-fr="Déploiement de matériel informatique, préparation et configuration de postes de travail adaptés aux besoins utilisateurs, tests fonctionnels (Stage & Alternance)."
-                       data-en="Deployment of IT equipment, workstation configuration tailored to user needs, functional testing (Internship & Apprenticeship).">
-                        Déploiement de matériel informatique, préparation et configuration de postes de travail adaptés aux besoins utilisateurs, tests fonctionnels (Stage & Alternance).
-                    </p>
                 </div>
 
                 <!-- Job 4 -->
-                <div class="relative pl-8">
-                    <span class="absolute -left-1.5 top-1.5 w-3 h-3 rounded-full bg-slate-700 ring-4 ring-slate-950"></span>
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                        <h3 class="text-lg font-semibold text-white" data-fr="Préparateur en Pharmacie" data-en="Pharmacy Assistant">Préparateur en Pharmacie</h3>
-                        <span class="text-xs font-mono px-2.5 py-1 rounded bg-slate-900 border border-slate-800 text-slate-400 w-fit" data-fr="2011 – 2019 (8 ans)" data-en="2011 – 2019 (8 yrs)">2011 – 2019 (8 ans)</span>
+                <div class="relative pl-8 group">
+                    <span class="absolute -left-[9px] top-6 w-4 h-4 rounded-full bg-slate-700 group-hover:bg-cyan-400 ring-4 ring-slate-950 transition-colors"></span>
+                    <div class="glow-card p-6 rounded-2xl">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                            <h3 class="text-lg font-bold text-white group-hover:text-cyan-300 transition" data-fr="Préparateur en Pharmacie" data-en="Pharmacy Assistant">Préparateur en Pharmacie</h3>
+                            <span class="text-xs font-mono px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300 w-fit" data-fr="2011 – 2019 (8 ans)" data-en="2011 – 2019 (8 yrs)">2011 – 2019 (8 ans)</span>
+                        </div>
+                        <p class="text-sm text-cyan-400/80 font-medium mt-1" data-fr="Diverses officines • Bourges (18) / La Rochelle (17)" data-en="Multiple Pharmacies • Bourges (18) / La Rochelle (17)">Diverses officines • Bourges (18) / La Rochelle (17)</p>
+                        <p class="text-slate-300 text-sm mt-3 leading-relaxed"
+                           data-fr="Délivrance d'ordonnances, conseil client exigeant, gestion rigoureuse des stocks et réception des commandes."
+                           data-en="Prescription processing, product sales, customer counseling, stock management, order reception.">
+                            Délivrance d'ordonnances, conseil client exigeant, gestion rigoureuse des stocks et réception des commandes.
+                        </p>
                     </div>
-                    <p class="text-sm text-slate-400 mt-1" data-fr="Diverses officines • Bourges (18) / La Rochelle (17)" data-en="Multiple Pharmacies • Bourges (18) / La Rochelle (17)">Diverses officines • Bourges (18) / La Rochelle (17)</p>
-                    <p class="text-slate-300 text-sm mt-3 leading-relaxed"
-                       data-fr="Délivrance d'ordonnances, conseil client, gestion des stocks, réception des commandes et rigueur réglementaire."
-                       data-en="Prescription processing, product sales, customer counseling, stock management, order reception.">
-                        Délivrance d'ordonnances, conseil client, gestion des stocks, réception des commandes et rigueur réglementaire.
-                    </p>
                 </div>
             </div>
         </section>
 
         <!-- Skills Section -->
-        <section id="skills" class="space-y-8">
+        <section id="skills" class="space-y-10 reveal">
             <div class="flex items-center gap-3">
-                <i class="fa-solid fa-layer-group text-cyan-400"></i>
-                <h2 class="text-2xl font-bold text-white" data-fr="Compétences Techniques & Savoir-être" data-en="Skills & Competencies">Compétences Techniques & Savoir-être</h2>
+                <div class="p-2.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+                    <i class="fa-solid fa-microchip"></i>
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-bold text-white" data-fr="Compétences & Stack" data-en="Skills & Competencies">Compétences & Stack</h2>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Hard Skills -->
-                <div class="p-6 rounded-xl bg-slate-900/50 border border-slate-800 space-y-5">
-                    <h3 class="font-mono text-sm uppercase tracking-wider text-cyan-400" data-fr="// Compétences Techniques" data-en="// Hard Skills">// Compétences Techniques</h3>
+                <div class="glow-card p-6 sm:p-8 rounded-2xl space-y-6">
+                    <h3 class="font-mono text-sm uppercase tracking-wider text-cyan-400 flex items-center gap-2">
+                        <i class="fa-solid fa-code"></i>
+                        <span data-fr="Compétences Techniques" data-en="Hard Skills">Compétences Techniques</span>
+                    </h3>
                     
-                    <div class="space-y-4">
+                    <div class="space-y-5">
                         <div>
-                            <p class="text-xs text-slate-400 mb-2" data-fr="Systèmes d'exploitation" data-en="Operating Systems">Systèmes d'exploitation</p>
+                            <p class="text-xs font-mono text-slate-400 mb-2.5" data-fr="SYSTÈMES D'EXPLOITATION" data-en="OPERATING SYSTEMS">SYSTÈMES D'EXPLOITATION</p>
                             <div class="flex flex-wrap gap-2">
-                                <span class="px-3 py-1 rounded-md bg-slate-800 text-slate-200 text-xs font-mono">Windows</span>
-                                <span class="px-3 py-1 rounded-md bg-slate-800 text-slate-200 text-xs font-mono">Linux</span>
-                                <span class="px-3 py-1 rounded-md bg-slate-800 text-slate-200 text-xs font-mono">iOS</span>
-                                <span class="px-3 py-1 rounded-md bg-slate-800 text-slate-200 text-xs font-mono">Android</span>
+                                <span class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 hover:border-cyan-400 text-slate-200 text-xs font-mono transition"><i class="fa-brands fa-windows text-cyan-400 mr-1.5"></i>Windows</span>
+                                <span class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 hover:border-cyan-400 text-slate-200 text-xs font-mono transition"><i class="fa-brands fa-linux text-amber-400 mr-1.5"></i>Linux</span>
+                                <span class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 hover:border-cyan-400 text-slate-200 text-xs font-mono transition"><i class="fa-brands fa-apple text-slate-300 mr-1.5"></i>iOS</span>
+                                <span class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 hover:border-cyan-400 text-slate-200 text-xs font-mono transition"><i class="fa-brands fa-android text-emerald-400 mr-1.5"></i>Android</span>
                             </div>
                         </div>
 
                         <div>
-                            <p class="text-xs text-slate-400 mb-2" data-fr="Réseaux" data-en="Networks">Réseaux</p>
+                            <p class="text-xs font-mono text-slate-400 mb-2.5" data-fr="RÉSEAUX & INFRASTRUCTURE" data-en="NETWORKS & INFRASTRUCTURE">RÉSEAUX & INFRASTRUCTURE</p>
                             <div class="flex flex-wrap gap-2">
-                                <span class="px-3 py-1 rounded-md bg-slate-800 text-slate-200 text-xs font-mono">LAN / WAN</span>
-                                <span class="px-3 py-1 rounded-md bg-slate-800 text-slate-200 text-xs font-mono">VPN</span>
-                                <span class="px-3 py-1 rounded-md bg-slate-800 text-slate-200 text-xs font-mono">Wi-Fi</span>
+                                <span class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 hover:border-cyan-400 text-cyan-300 text-xs font-mono transition">LAN / WAN</span>
+                                <span class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 hover:border-cyan-400 text-cyan-300 text-xs font-mono transition">VPN</span>
+                                <span class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 hover:border-cyan-400 text-cyan-300 text-xs font-mono transition">Wi-Fi</span>
                             </div>
                         </div>
 
                         <div>
-                            <p class="text-xs text-slate-400 mb-2" data-fr="Support & Administration" data-en="Support & Administration">Support & Administration</p>
+                            <p class="text-xs font-mono text-slate-400 mb-2.5" data-fr="SUPPORT, SÉCURITÉ & OUTILS" data-en="SUPPORT, SECURITY & TOOLS">SUPPORT, SÉCURITÉ & OUTILS</p>
                             <div class="flex flex-wrap gap-2">
-                                <span class="px-3 py-1 rounded-md bg-slate-800 text-slate-200 text-xs" data-fr="Diagnostic matériel & logiciel" data-en="Hardware & software troubleshooting">Diagnostic matériel & logiciel</span>
-                                <span class="px-3 py-1 rounded-md bg-slate-800 text-slate-200 text-xs" data-fr="Gestion des comptes utilisateurs" data-en="User account management">Gestion des comptes utilisateurs</span>
-                                <span class="px-3 py-1 rounded-md bg-slate-800 text-slate-200 text-xs" data-fr="Principes de sécurité" data-en="Security principles">Principes de sécurité</span>
-                                <span class="px-3 py-1 rounded-md bg-slate-800 text-slate-200 text-xs">Microsoft Office</span>
+                                <span class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-200 text-xs" data-fr="Diagnostic matériel & logiciel" data-en="Hardware & software troubleshooting">Diagnostic matériel & logiciel</span>
+                                <span class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-200 text-xs" data-fr="Gestion des comptes utilisateurs" data-en="User account management">Gestion des comptes utilisateurs</span>
+                                <span class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-200 text-xs" data-fr="Principes de sécurité" data-en="Security principles">Principes de sécurité</span>
+                                <span class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-200 text-xs">Microsoft Office</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Soft Skills & Languages -->
-                <div class="p-6 rounded-xl bg-slate-900/50 border border-slate-800 space-y-5 flex flex-col justify-between">
-                    <div class="space-y-4">
-                        <h3 class="font-mono text-sm uppercase tracking-wider text-cyan-400" data-fr="// Savoir-être" data-en="// Soft Skills">// Savoir-être</h3>
-                        <ul class="space-y-2.5 text-sm text-slate-300">
-                            <li class="flex items-center gap-2.5"><i class="fa-solid fa-check text-cyan-400 text-xs"></i> <span data-fr="Esprit d'analyse et résolution de problèmes" data-en="Analytical mindset & problem-solving">Esprit d'analyse et résolution de problèmes</span></li>
-                            <li class="flex items-center gap-2.5"><i class="fa-solid fa-check text-cyan-400 text-xs"></i> <span data-fr="Sens du service et écoute des besoins utilisateurs" data-en="Strong alignment with user needs">Sens du service et écoute des besoins utilisateurs</span></li>
-                            <li class="flex items-center gap-2.5"><i class="fa-solid fa-check text-cyan-400 text-xs"></i> <span data-fr="Travail d'équipe et collaboration" data-en="Teamwork & collaboration">Travail d'équipe et collaboration</span></li>
-                            <li class="flex items-center gap-2.5"><i class="fa-solid fa-check text-cyan-400 text-xs"></i> <span data-fr="Gestion des priorités et organisation" data-en="Effective task management & prioritization">Gestion des priorités et organisation</span></li>
-                            <li class="flex items-center gap-2.5"><i class="fa-solid fa-check text-cyan-400 text-xs"></i> <span data-fr="Adaptabilité aux évolutions technologiques" data-en="Adaptability to technological changes">Adaptabilité aux évolutions technologiques</span></li>
+                <div class="glow-card p-6 sm:p-8 rounded-2xl flex flex-col justify-between space-y-6">
+                    <div class="space-y-5">
+                        <h3 class="font-mono text-sm uppercase tracking-wider text-cyan-400 flex items-center gap-2">
+                            <i class="fa-solid fa-user-check"></i>
+                            <span data-fr="Savoir-être & Méthodologie" data-en="Soft Skills & Methodology">Savoir-être & Méthodologie</span>
+                        </h3>
+                        <ul class="space-y-3 text-sm text-slate-300">
+                            <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span> <span data-fr="Esprit d'analyse et résolution de problèmes" data-en="Analytical mindset & problem-solving">Esprit d'analyse et résolution de problèmes</span></li>
+                            <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span> <span data-fr="Sens du service et écoute des besoins utilisateurs" data-en="Strong alignment with user needs">Sens du service et écoute des besoins utilisateurs</span></li>
+                            <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span> <span data-fr="Travail d'équipe et collaboration" data-en="Teamwork & collaboration">Travail d'équipe et collaboration</span></li>
+                            <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span> <span data-fr="Gestion des priorités et organisation" data-en="Effective task management & prioritization">Gestion des priorités et organisation</span></li>
+                            <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span> <span data-fr="Adaptabilité aux évolutions technologiques" data-en="Adaptability to technological changes">Adaptabilité aux évolutions technologiques</span></li>
                         </ul>
                     </div>
 
-                    <div class="pt-4 border-t border-slate-800">
-                        <h4 class="font-mono text-xs uppercase tracking-wider text-slate-400 mb-3" data-fr="Langues" data-en="Languages">Langues</h4>
-                        <div class="flex flex-wrap gap-3 text-sm">
-                            <span class="px-3 py-1 rounded-md bg-slate-800/80 border border-slate-700" data-fr="🇫🇷 Français : Langue maternelle" data-en="🇫🇷 French: Native">🇫🇷 Français : Langue maternelle</span>
-                            <span class="px-3 py-1 rounded-md bg-slate-800/80 border border-slate-700" data-fr="🇬🇧 Anglais : Professionnel" data-en="🇬🇧 English: Professional">🇬🇧 Anglais : Professionnel</span>
+                    <div class="pt-5 border-t border-slate-800/80">
+                        <p class="font-mono text-xs uppercase tracking-wider text-slate-400 mb-3" data-fr="Langues" data-en="Languages">Langues</p>
+                        <div class="flex flex-wrap gap-3 text-xs sm:text-sm">
+                            <span class="px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700" data-fr="🇫🇷 Français : Langue maternelle" data-en="🇫🇷 French: Native">🇫🇷 Français : Langue maternelle</span>
+                            <span class="px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700" data-fr="🇬🇧 Anglais : Professionnel" data-en="🇬🇧 English: Professional">🇬🇧 Anglais : Professionnel</span>
                         </div>
                     </div>
                 </div>
@@ -218,38 +323,40 @@
         </section>
 
         <!-- Education & Interests -->
-        <section id="education" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <section id="education" class="grid grid-cols-1 md:grid-cols-2 gap-8 reveal">
             <!-- Education -->
             <div class="space-y-6">
                 <div class="flex items-center gap-3">
-                    <i class="fa-solid fa-graduation-cap text-cyan-400"></i>
+                    <div class="p-2.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
                     <h2 class="text-2xl font-bold text-white" data-fr="Formation" data-en="Education">Formation</h2>
                 </div>
 
                 <div class="space-y-4">
-                    <div class="p-4 rounded-xl bg-slate-900/50 border border-slate-800">
+                    <div class="glow-card p-5 rounded-2xl">
                         <div class="flex justify-between items-start gap-2">
-                            <h3 class="font-semibold text-white text-sm" data-fr="Développeur d'application Python" data-en="Python Application Developer">Développeur d'application Python</h3>
+                            <h3 class="font-bold text-white text-sm" data-fr="Développeur d'application Python" data-en="Python Application Developer">Développeur d'application Python</h3>
                             <span class="text-xs font-mono text-slate-400 shrink-0">2022 – 2023</span>
                         </div>
-                        <p class="text-xs text-slate-400 mt-1" data-fr="OpenClassRooms (Formation à distance) • Niveau Bac+3/4 (non validé)" data-en="OpenClassRooms (Remote training) • Degree not obtained">OpenClassRooms (Formation à distance) • Niveau Bac+3/4 (non validé)</p>
+                        <p class="text-xs text-slate-400 mt-1.5" data-fr="OpenClassRooms (Formation à distance) • Diplôme non validé" data-en="OpenClassRooms (Remote training) • Degree not obtained">OpenClassRooms (Formation à distance) • Diplôme non validé</p>
                     </div>
 
-                    <div class="p-4 rounded-xl bg-slate-900/50 border border-cyan-500/30">
+                    <div class="glow-card p-5 rounded-2xl !border-cyan-500/40">
                         <div class="flex justify-between items-start gap-2">
-                            <h3 class="font-semibold text-white text-sm">BTS SIO — Option SISR</h3>
-                            <span class="text-xs font-mono text-cyan-400 shrink-0">2020 – 2022</span>
+                            <h3 class="font-bold text-white text-sm">BTS SIO — Option SISR</h3>
+                            <span class="text-xs font-mono px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 shrink-0">2020 – 2022</span>
                         </div>
-                        <p class="text-xs text-slate-300 mt-1" data-fr="Solutions d'Infrastructure, Systèmes et Réseaux (Diplôme obtenu)" data-en="Infrastructure, Systems and Network Solutions (Degree obtained)">Solutions d'Infrastructure, Systèmes et Réseaux (Diplôme obtenu)</p>
-                        <p class="text-xs text-slate-400 mt-0.5">Groupe Saint Joseph La Salle • Troyes (10)</p>
+                        <p class="text-xs text-cyan-300/90 mt-1.5" data-fr="Solutions d'Infrastructure, Systèmes et Réseaux (Diplôme obtenu)" data-en="Infrastructure, Systems and Network Solutions (Degree obtained)">Solutions d'Infrastructure, Systèmes et Réseaux (Diplôme obtenu)</p>
+                        <p class="text-xs text-slate-400 mt-1">Groupe Saint Joseph La Salle • Troyes (10)</p>
                     </div>
 
-                    <div class="p-4 rounded-xl bg-slate-900/50 border border-slate-800">
+                    <div class="glow-card p-5 rounded-2xl">
                         <div class="flex justify-between items-start gap-2">
-                            <h3 class="font-semibold text-white text-sm" data-fr="Brevet Professionnel Préparateur en Pharmacie" data-en="BP Pharmacy Assistant">Brevet Professionnel Préparateur en Pharmacie</h3>
+                            <h3 class="font-bold text-white text-sm" data-fr="Brevet Professionnel Préparateur en Pharmacie" data-en="BP Pharmacy Assistant">Brevet Professionnel Préparateur en Pharmacie</h3>
                             <span class="text-xs font-mono text-slate-400 shrink-0">2011 – 2013</span>
                         </div>
-                        <p class="text-xs text-slate-400 mt-1">CFA de Bourges • Bourges (18)</p>
+                        <p class="text-xs text-slate-400 mt-1.5">CFA de Bourges • Bourges (18)</p>
                     </div>
                 </div>
             </div>
@@ -257,31 +364,39 @@
             <!-- Interests -->
             <div class="space-y-6">
                 <div class="flex items-center gap-3">
-                    <i class="fa-solid fa-terminal text-cyan-400"></i>
+                    <div class="p-2.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+                        <i class="fa-solid fa-terminal"></i>
+                    </div>
                     <h2 class="text-2xl font-bold text-white" data-fr="Centres d'intérêt" data-en="Interests & Hobbies">Centres d'intérêt</h2>
                 </div>
 
                 <div class="space-y-4">
-                    <div class="p-4 rounded-xl bg-slate-900/50 border border-slate-800 flex items-start gap-3.5">
-                        <i class="fa-solid fa-robot text-cyan-400 mt-1"></i>
+                    <div class="glow-card p-5 rounded-2xl flex items-start gap-4">
+                        <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-700 text-cyan-400">
+                            <i class="fa-solid fa-robot"></i>
+                        </div>
                         <div>
-                            <h3 class="font-medium text-white text-sm" data-fr="Automatisation & Scripting" data-en="Workflow Automation & Scripting">Automatisation & Scripting</h3>
+                            <h3 class="font-bold text-white text-sm" data-fr="Automatisation & Scripting" data-en="Workflow Automation & Scripting">Automatisation & Scripting</h3>
                             <p class="text-xs text-slate-400 mt-1" data-fr="Exploration technique, optimisation de flux de travail et scripts." data-en="Technical exploration, workflow optimization, and scripting.">Exploration technique, optimisation de flux de travail et scripts.</p>
                         </div>
                     </div>
 
-                    <div class="p-4 rounded-xl bg-slate-900/50 border border-slate-800 flex items-start gap-3.5">
-                        <i class="fa-solid fa-microchip text-cyan-400 mt-1"></i>
+                    <div class="glow-card p-5 rounded-2xl flex items-start gap-4">
+                        <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-700 text-cyan-400">
+                            <i class="fa-solid fa-gamepad"></i>
+                        </div>
                         <div>
-                            <h3 class="font-medium text-white text-sm" data-fr="Hardware, Bidouille IT & Jeux Vidéo" data-en="Hardware Setups, IT Tinkering & Gaming">Hardware, Bidouille IT & Jeux Vidéo</h3>
-                            <p class="text-xs text-slate-400 mt-1" data-fr="Montage, configuration matérielle, environnements Linux et jeux PC." data-en="Hardware setups, system tuning, Linux environments, and PC gaming.">Montage, configuration matérielle, environnements Linux et jeux PC.</p>
+                            <h3 class="font-bold text-white text-sm" data-fr="Hardware, Bidouille IT & Jeux Vidéo" data-en="Hardware Setups, IT Tinkering & Gaming">Hardware, Bidouille IT & Jeux Vidéo</h3>
+                            <p class="text-xs text-slate-400 mt-1" data-fr="Configurations matérielles, environnements Linux et jeux PC." data-en="Hardware setups, Linux environments, and PC gaming.">Configurations matérielles, environnements Linux et jeux PC.</p>
                         </div>
                     </div>
 
-                    <div class="p-4 rounded-xl bg-slate-900/50 border border-slate-800 flex items-start gap-3.5">
-                        <i class="fa-brands fa-osi text-cyan-400 mt-1"></i>
+                    <div class="glow-card p-5 rounded-2xl flex items-start gap-4">
+                        <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-700 text-cyan-400">
+                            <i class="fa-brands fa-osi"></i>
+                        </div>
                         <div>
-                            <h3 class="font-medium text-white text-sm" data-fr="Écosystème Open Source" data-en="Open Source Ecosystem">Écosystème Open Source</h3>
+                            <h3 class="font-bold text-white text-sm" data-fr="Écosystème Open Source" data-en="Open Source Ecosystem">Écosystème Open Source</h3>
                             <p class="text-xs text-slate-400 mt-1" data-fr="Veille technologique, logiciels libres et développement logiciel." data-en="Tech watch, free/open-source software, and software development.">Veille technologique, logiciels libres et développement logiciel.</p>
                         </div>
                     </div>
@@ -292,19 +407,189 @@
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">
-        <p data-fr="Florent SPRING • Portfolio hébergé sur GitHub Pages" data-en="Florent SPRING • Portfolio hosted on GitHub Pages">Florent SPRING • Portfolio hébergé sur GitHub Pages</p>
+    <footer class="border-t border-slate-800/80 py-8 text-center text-xs font-mono text-slate-500">
+        <p data-fr="Florent SPRING • Déployé sur GitHub Pages" data-en="Florent SPRING • Deployed on GitHub Pages">Florent SPRING • Déployé sur GitHub Pages</p>
     </footer>
 
     <script>
+        /* 1. FOND ANIMÉ TOPOLOGIE RÉSEAU (CANVAS) */
+        const canvas = document.getElementById('network-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let mouse = { x: null, y: null, radius: 140 };
+
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.x;
+            mouse.y = e.y;
+        });
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initParticles();
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 0.6;
+                this.vy = (Math.random() - 0.5) * 0.6;
+                this.size = Math.random() * 2 + 1;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+            }
+            draw() {
+                ctx.fillStyle = 'rgba(34, 211, 238, 0.6)';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            const count = Math.min(Math.floor((canvas.width * canvas.height) / 16000), 85);
+            for (let i = 0; i < count; i++) particles.push(new Particle());
+        }
+
+        function animateCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+
+                for (let j = i; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 130) {
+                        ctx.strokeStyle = `rgba(34, 211, 238, ${0.18 - dist / 750})`;
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                    }
+                }
+
+                if (mouse.x && mouse.y) {
+                    const dx = particles[i].x - mouse.x;
+                    const dy = particles[i].y - mouse.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < mouse.radius) {
+                        ctx.strokeStyle = `rgba(56, 189, 248, ${0.4 - dist / 350})`;
+                        ctx.lineWidth = 1.2;
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(mouse.x, mouse.y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(animateCanvas);
+        }
+        resizeCanvas();
+        animateCanvas();
+
+        /* 2. EFFET MACHINE À ÉCRIRE (TYPEWRITER) */
         let currentLang = 'fr';
-        const toggleBtn = document.getElementById('lang-toggle');
+        const titles = {
+            fr: [
+                "Technicien Support IT & Administrateur Systèmes",
+                "Diagnostic Matériel, Logiciel & Réseaux",
+                "Déploiement d'Infrastructure & Assistance",
+                "Automatisation, Linux & Open Source"
+            ],
+            en: [
+                "IT Support Technician & Systems Administrator",
+                "Hardware, Software & Network Troubleshooting",
+                "Infrastructure Deployment & User Support",
+                "Automation, Linux & Open Source"
+            ]
+        };
 
-        toggleBtn.addEventListener('click', () => {
+        let titleIndex = 0;
+        let charIndex = 0;
+        let isDeleting = false;
+        const typewriterEl = document.getElementById('typewriter');
+
+        function typeEffect() {
+            const currentList = titles[currentLang];
+            const currentText = currentList[titleIndex % currentList.length];
+
+            if (isDeleting) {
+                typewriterEl.textContent = currentText.substring(0, charIndex - 1);
+                charIndex--;
+            } else {
+                typewriterEl.textContent = currentText.substring(0, charIndex + 1);
+                charIndex++;
+            }
+
+            let speed = isDeleting ? 30 : 55;
+            if (!isDeleting && charIndex === currentText.length) {
+                speed = 2000;
+                isDeleting = true;
+            } else if (isDeleting && charIndex === 0) {
+                isDeleting = false;
+                titleIndex++;
+                speed = 400;
+            }
+            setTimeout(typeEffect, speed);
+        }
+        typeEffect();
+
+        /* 3. TERMINAL INTERACTIF */
+        const termInput = document.getElementById('terminal-input');
+        const termOutput = document.getElementById('terminal-output');
+
+        function runCmd(cmd) {
+            const cleanCmd = cmd.trim().toLowerCase();
+            if (!cleanCmd) return;
+
+            if (cleanCmd === 'clear') {
+                termOutput.innerHTML = '';
+                return;
+            }
+
+            const responses = {
+                help: "Commandes disponibles : <span class='text-cyan-400'>neofetch</span>, <span class='text-cyan-400'>skills</span>, <span class='text-cyan-400'>contact</span>, <span class='text-cyan-400'>clear</span>",
+                neofetch: `<div class="text-cyan-400">florent@montlucon</div>-----------------<br><span class="text-slate-400">Role:</span> IT Support Tech & SysAdmin<br><span class="text-slate-400">OS:</span> Linux / Windows<br><span class="text-slate-400">Diplôme:</span> BTS SIO option SISR<br><span class="text-slate-400">Localisation:</span> Montluçon (03), France<br><span class="text-slate-400">Status:</span> Ready to deploy!`,
+                skills: "<span class='text-emerald-400'>[OK]</span> OS: Windows, Linux, iOS, Android<br><span class='text-emerald-400'>[OK]</span> Réseaux: LAN, WAN, VPN, Wi-Fi<br><span class='text-emerald-400'>[OK]</span> Admin: Gestion comptes, Sécurité, Diagnostic HW/SW",
+                contact: "Email: <a href='mailto:florent.spring@ik.me' class='text-cyan-400 underline'>florent.spring@ik.me</a> | Tel: +33 6 76 33 65 17"
+            };
+
+            const reply = responses[cleanCmd] || `<span class="text-rose-400">Commande introuvable : ${cleanCmd}</span>. Tapez <span class="text-cyan-400">help</span>.`;
+            termOutput.innerHTML += `<div><span class="text-emerald-400">$</span> <span class="text-white">${cleanCmd}</span></div><div class="pl-3 pb-2 text-slate-300">${reply}</div>`;
+            termOutput.scrollTop = termOutput.scrollHeight;
+        }
+
+        termInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                runCmd(termInput.value);
+                termInput.value = '';
+            }
+        });
+
+        /* 4. ANIMATION AU SCROLL (INTERSECTION OBSERVER) */
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) entry.target.classList.add('active');
+            });
+        }, { threshold: 0.12 });
+
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+        /* 5. BOUTONS LANGUE, EMAIL & TÉLÉPHONE */
+        document.getElementById('lang-toggle').addEventListener('click', (e) => {
             currentLang = currentLang === 'fr' ? 'en' : 'fr';
-            toggleBtn.textContent = currentLang === 'fr' ? 'EN' : 'FR';
+            e.target.textContent = currentLang === 'fr' ? 'EN' : 'FR';
             document.documentElement.lang = currentLang;
-
             document.querySelectorAll('[data-fr]').forEach(el => {
                 el.textContent = el.getAttribute(`data-${currentLang}`);
             });
@@ -320,10 +605,8 @@
         }
 
         function revealPhone() {
-            const parts = ['+33', '6', '76', '33', '65', '17'];
-            const phone = parts.join(' ');
-            const btn = document.getElementById('phone-btn');
-            btn.outerHTML = `<a href="tel:+33676336517" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-slate-900 border border-cyan-500/40 text-cyan-300 text-sm font-mono"><i class="fa-solid fa-phone"></i><span>${phone}</span></a>`;
+            const phone = ['+33', '6', '76', '33', '65', '17'].join(' ');
+            document.getElementById('phone-btn').outerHTML = `<a href="tel:+33676336517" class="inline-flex items-center gap-2 px-4 py-3 rounded-xl bg-slate-900 border border-cyan-500/50 text-cyan-300 text-sm font-mono shadow-lg shadow-cyan-500/10"><i class="fa-solid fa-phone"></i><span>${phone}</span></a>`;
         }
     </script>
 </body>
